@@ -1,4 +1,5 @@
 import requests
+from os import cpu_count
 from concurrent.futures import ThreadPoolExecutor
 from ytmusicapi import YTMusic
 
@@ -65,7 +66,7 @@ while url:
     url = track_info.get('next')  
 
 YTMusicLinks = []
-with ThreadPoolExecutor(max_workers=10) as executor:
+with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
     futures = [executor.submit(process_track, track) for track in all_tracks]
     for future in futures:
         result = future.result()
