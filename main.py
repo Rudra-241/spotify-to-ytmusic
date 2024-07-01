@@ -39,14 +39,14 @@ def filterTrackInfo(track_info):
 def getYTMusicLinks(track):
     query = track["track"]
     filter = "songs"
-    limit = 3  # Limit for YouTube Music search (not working due to library issue)
+    limit = 3  # Limit not working 
     ignore_spelling = True
     data = ytmusic.search(query=query, filter=filter, limit=limit, ignore_spelling=ignore_spelling)
     track_info = [{'videoId': item['videoId'], 'title': item['title']} for item in data]
     return track_info
 
 def process_track(track):
-    return getYTMusicLinks(track)[0]  # Assuming we want only the first result
+    return getYTMusicLinks(track)[0]  # will change when limit gets fixed
 
 access_token = getAccessToken()
 
@@ -64,7 +64,6 @@ while url:
     all_tracks.extend(filtered_tracks)
     url = track_info.get('next')  
 
-# Use ThreadPoolExecutor to process tracks concurrently
 YTMusicLinks = []
 with ThreadPoolExecutor(max_workers=10) as executor:
     futures = [executor.submit(process_track, track) for track in all_tracks]
