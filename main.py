@@ -2,22 +2,26 @@ import requests
 from os import cpu_count
 from concurrent.futures import ThreadPoolExecutor
 from ytmusicapi import YTMusic
+import create_secrets
+import secrets
 
 ytmusic = YTMusic()
-
 def getAccessToken():
     url = "https://accounts.spotify.com/api/token"
     payload = {
-        'grant_type': 'client_credentials',
-        'client_id': 'c81471798011498a8d1c572988452e75',
-        'client_secret': 'ade595ff2e97449a8eb499ec0a6638cc'
-    }
+            'grant_type': 'client_credentials',
+            'client_id': secrets.CLIENT_ID,
+            'client_secret': secrets.CLIENT_SECRET
+            }
     headers = {
-        'Content-Type': 'application/x-www-form-urlencoded'
-    }
+            'Content-Type': 'application/x-www-form-urlencoded'
+            }
     response = requests.post(url, headers=headers, data=payload)
-    return response.json().get('access_token')
-
+    access_token = response.json().get('access_token')
+    if access_token == None:
+        print("Invalid secrets, recreating secrets...")
+        create_secrets.main(bad_secrets=True)
+    return access_token
 def getTracks(url, headers):
     response = requests.get(url, headers=headers)
     return response.json()
@@ -49,28 +53,32 @@ def getYTMusicLinks(track):
 def process_track(track):
     return getYTMusicLinks(track)[0]  # will change when limit gets fixed
 
-access_token = getAccessToken()
+def main():
+    create_secrets.main()
+    access_token = getAccessToken()
 
-url = "https://api.spotify.com/v1/playlists/06YhinCx7gKywjtJupZXyt/tracks"
-headers = {
-    'Authorization': 'Bearer ' + access_token,
-}
+    url = "https://api.spotify.com/v1/playlists/06YhinCx7gKywjtJupZXyt/tracks"
+    headers = {
+            'Authorization': 'Bearer ' + access_token,
+            }
 
-all_tracks = []
+    all_tracks = []
 
 # Fetch tracks from Spotify
-while url:
-    track_info = getTracks(url, headers)
-    filtered_tracks = filterTrackInfo(track_info)
-    all_tracks.extend(filtered_tracks)
-    url = track_info.get('next')  
+    while url:
+        track_info = getTracks(url, headers)
+        filtered_tracks = filterTrackInfo(track_info)
+        all_tracks.extend(filtered_tracks)
+        url = track_info.get('next')  
 
-YTMusicLinks = []
-with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
-    futures = [executor.submit(process_track, track) for track in all_tracks]
-    for future in futures:
-        result = future.result()
-        YTMusicLinks.append(result)
+    YTMusicLinks = []
+    with ThreadPoolExecutor(max_workers=cpu_count()) as executor:
+        futures = [executor.submit(process_track, track) for track in all_tracks]
+        for future in futures:
+            result = future.result()
+            YTMusicLinks.append(result)
 
-print(YTMusicLinks)
+    print(YTMusicLinks)
 
+if __name__ == "__main__":
+    main()
