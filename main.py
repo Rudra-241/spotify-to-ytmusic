@@ -1,11 +1,10 @@
 import requests
 from os import cpu_count
 from concurrent.futures import ThreadPoolExecutor
-from ytmusicapi import YTMusic
+from ytmusicapi import YTMusic,setup_oauth
 import create_secrets
 import secrets
-
-ytmusic = YTMusic()
+ytmusic = YTMusic("oauth.json")
 def getAccessToken():
     url = "https://accounts.spotify.com/api/token"
     payload = {
@@ -22,6 +21,9 @@ def getAccessToken():
         print("Invalid secrets, recreating secrets...")
         create_secrets.main(bad_secrets=True)
     return access_token
+def getPlaylistID(url):
+    return url.split('/')[4].split('?')[0]
+
 def getTracks(url, headers):
     response = requests.get(url, headers=headers)
     return response.json()
@@ -56,8 +58,10 @@ def process_track(track):
 def main():
     create_secrets.main()
     access_token = getAccessToken()
-
-    url = "https://api.spotify.com/v1/playlists/06YhinCx7gKywjtJupZXyt/tracks"
+    spotify_playlist_id = getPlaylistID(input("Enter link to spotify playlist"))
+    new_playlist_name = input("Enter the name of the new playlist: ")
+    new_playlist_description = input("Enter the description of the new playlist: ")
+    url = "https://api.spotify.com/v1/playlists/1gKHrvH6y4l5UySq6d8cgh/tracks"
     headers = {
             'Authorization': 'Bearer ' + access_token,
             }
@@ -78,7 +82,9 @@ def main():
             result = future.result()
             YTMusicLinks.append(result)
 
-    print(YTMusicLinks)
+    video_ids = [item['videoId'] for item in YTMusicLinks]
+    
+    print(ytmusic.create_playlist(title=new_playlist_name,description=new_playlist_description,video_ids = video_ids))
 
 if __name__ == "__main__":
     main()
