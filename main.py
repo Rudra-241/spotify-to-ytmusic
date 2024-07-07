@@ -61,7 +61,9 @@ def main():
     spotify_playlist_id = getPlaylistID(input("Enter link to spotify playlist"))
     new_playlist_name = input("Enter the name of the new playlist: ")
     new_playlist_description = input("Enter the description of the new playlist: ")
-    url = "https://api.spotify.com/v1/playlists/1gKHrvH6y4l5UySq6d8cgh/tracks"
+    str1 = r"https://api.spotify.com/v1/playlists/"
+    str2 = r"/tracks" 
+    url = f"{str1}{spotify_playlist_id}{str2}"
     headers = {
             'Authorization': 'Bearer ' + access_token,
             }
